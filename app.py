@@ -4,6 +4,22 @@ import pandas as pd
 import streamlit as st
 
 DATA_FILE = Path(__file__).parent / "data" / "comparison.xlsx"
+# Настройки сравниваемых объектов.
+# При переносе приложения меняются значения здесь, а не логика ниже.
+LEFT_NAME = "Котики"
+RIGHT_NAME = "Песики"
+
+CRITERION_COLUMN = "Критерий"
+LEFT_STATUS_COLUMN = "Статус кошки"
+RIGHT_STATUS_COLUMN = "Статус собаки"
+
+# Иконки для краткого отображения статусов в таблице-светофоре.
+STATUS_ICONS = {
+    "Просто": "✅",
+    "Есть затруднения": "⚠️",
+    "Очень сложно": "🔴",
+    "Зависит от животного": "❔",
+}
 
 #Технические таблицы для проверки: True - показать, False - скрыть
 SHOW_DEBUG = False
@@ -39,16 +55,16 @@ except ValueError:
 #Колонки, по которым приложение строит сравнение
 required_columns = {
     "ID",
-    "Критерий",
+    CRITERION_COLUMN,
     "Что проверяем (бизнес-язык)",
     "Перевод на технический язык",
     "Что ищем в источниках",
-    "Статус кошки",
+    LEFT_STATUS_COLUMN,
     "Возможности кошки",
     "Ограничения кошки",
     "Ссылка на проверку кошки",
     "Источники кошки",
-    "Статус собаки",
+    RIGHT_STATUS_COLUMN,
     "Возможности собаки",
     "Ограничения собаки",
     "Ссылка на проверку собаки",
@@ -71,8 +87,8 @@ status_methodology = status_methodology.iloc[1:]
 status_methodology = status_methodology.reset_index(drop=True)
 
 #Удаление лишних пробелов в названиеях статусов
-matrix["Статус кошки"] = matrix["Статус кошки"].str.strip()
-matrix["Статус собаки"] = matrix["Статус собаки"].str.strip()
+matrix[LEFT_STATUS_COLUMN] = matrix[LEFT_STATUS_COLUMN].str.strip()
+matrix[RIGHT_STATUS_COLUMN] = matrix[RIGHT_STATUS_COLUMN].str.strip()
 status_methodology["Статус"] = status_methodology["Статус"].str.strip()
 
 #Проверка заполненности и уникальности ID
@@ -85,12 +101,19 @@ if matrix["ID"].duplicated().any():
     st.stop()
 
 #Получение уникльных статусов и объединение вариантов
-cat_statuses = set(matrix["Статус кошки"].dropna())
-dog_statuses = set(matrix["Статус собаки"].dropna())
-matrix_statuses = cat_statuses | dog_statuses
+left_statuses = set(matrix[LEFT_STATUS_COLUMN].dropna())
+right_statuses = set(matrix[RIGHT_STATUS_COLUMN].dropna())
+matrix_statuses = left_statuses | right_statuses
 
 #Статусы, разрешенные методикой
 allowed_statuses = set(status_methodology["Статус"].dropna())
+
+#Проверка иконок у статусов
+statuses_without_icons = allowed_statuses - set(STATUS_ICONS)
+if statuses_without_icons:
+    st.error("Для некоторых статусов не настроены иконки")
+    st.write(statuses_without_icons)
+    st.stop()
 
 #Проверка на сответствие статусов матрицы и справочника
 unknown_statuses = matrix_statuses - allowed_statuses
@@ -107,6 +130,37 @@ rules_methodology = rules_methodology.iloc[1:]
 rules_methodology = rules_methodology.reset_index(drop=True)
 
 data_description = info.iloc[1,0]
+
+# Готовим компактную таблицу статусов для главной страницы
+status_overview = matrix[
+    [CRITERION_COLUMN, LEFT_STATUS_COLUMN, RIGHT_STATUS_COLUMN]
+].copy()
+
+# Заменяем текстовые статусы на настроенные иконки
+status_columns = [LEFT_STATUS_COLUMN, RIGHT_STATUS_COLUMN]
+
+status_overview[status_columns] = (
+    status_overview[status_columns].replace(STATUS_ICONS)
+)
+
+# Даём колонкам короткие пользовательские названия
+status_overview = status_overview.rename(
+    columns={
+        LEFT_STATUS_COLUMN: LEFT_NAME,
+        RIGHT_STATUS_COLUMN: RIGHT_NAME,
+    }
+)
+
+# Выводим краткое сравнение на главной странице
+st.subheader("Сравнение по критериям")
+
+status_legend = " · ".join(
+    f"{icon} — {status}"
+    for status, icon in STATUS_ICONS.items()
+)
+
+st.caption(status_legend)
+st.dataframe(status_overview, hide_index=True)
 
 #Техничесние выводы для проверки загрузки и обработки данных
 if SHOW_DEBUG:

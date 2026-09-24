@@ -2,6 +2,8 @@
 Interactive comparison app built with Python and Streamlit
 # Cats vs Dogs Comparison
 
+**Демо:** [Открыть приложение «Котики vs песики»](https://cats-vs-dogs-comparison.streamlit.app)
+
 Интерактивное приложение для сравнения кошек и собак по списку критериев с указанием бизнес- и технических требований. 
 
 ## Зачем создан проект
@@ -27,4 +29,4 @@ Interactive comparison app built with Python and Streamlit
 
 ## Статус
 
-Проект находится в разработке.
+Разработка завершена. Трямс!

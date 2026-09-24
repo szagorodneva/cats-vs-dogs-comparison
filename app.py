@@ -13,6 +13,24 @@ CRITERION_COLUMN = "Критерий"
 LEFT_STATUS_COLUMN = "Статус кошки"
 RIGHT_STATUS_COLUMN = "Статус собаки"
 
+# Колонки с возможностями и ограничениями каждого сравниваемого объекта
+LEFT_CAPABILITIES_COLUMN = "Возможности кошки"
+LEFT_LIMITATIONS_COLUMN = "Ограничения кошки"
+
+RIGHT_CAPABILITIES_COLUMN = "Возможности собаки"
+RIGHT_LIMITATIONS_COLUMN = "Ограничения собаки"
+
+# Колонки с названием критерия и его пояснением.
+CRITERION_COLUMN = "Критерий"
+QUESTION_COLUMN = "Что проверяем (бизнес-язык)"
+
+# Колонки со ссылками на проверку и источниками
+LEFT_CHECK_LINK_COLUMN = "Ссылка на проверку кошки"
+LEFT_SOURCES_COLUMN = "Источники кошки"
+
+RIGHT_CHECK_LINK_COLUMN = "Ссылка на проверку собаки"
+RIGHT_SOURCES_COLUMN = "Источники собаки"
+
 # Иконки для краткого отображения статусов в таблице-светофоре.
 STATUS_ICONS = {
     "Просто": "✅",
@@ -21,19 +39,44 @@ STATUS_ICONS = {
     "Зависит от животного": "❔",
 }
 
+CONCLUSION_COLUMN = "Вывод для будущего владельца"
+
 #Технические таблицы для проверки: True - показать, False - скрыть
 SHOW_DEBUG = False
 
-#Настройки страницы в браузере
-st.set_page_config(
-    page_title = 'Котики и песики',
-    page_icon = '🐱❔🐶',
-    layout = 'wide',
+
+# Заполнение верхнего блока страницы
+PROJECT_TITLE = "Котики vs песики"
+PAGE_ICON = "🐱❔🐶"
+
+PROJECT_DESCRIPTION = (
+    "Сравниваем котиков и песиков по условиям содержания, уходу "
+    "и совместимости с образом жизни городской семьи"
 )
-#Заголовок и описание проекта
-st.title('Котики vs песики')
-st.write('Как превратить табличного монстра в симпатичный аналитический интерфейс')
-st.caption('Демонстрационный проект на Python, Pandas и Streamlit')
+
+PROJECT_CAPTION = (
+    "Как превратить табличного монстра в симпатичный аналитический интерфейс. " 
+    "Демонстрационный проект на Python, Pandas и Streamlit"
+)
+
+KEY_QUESTION = "Подходит ли животное для домашнего содержания?"
+
+LEFT_RESULT = "Домашнее содержание возможно"
+RIGHT_RESULT = "Домашнее содержание возможно"
+
+RESULT_NOTE = (
+    "При условии, что особенности животного соответствуют "
+    "образу жизни и возможностям владельца. Его потребности в пушистости и лапках"
+)
+#===================================================
+#===================================================
+#===================================================
+#===================================================
+
+
+st.title(PROJECT_TITLE)
+st.write(PROJECT_DESCRIPTION)
+st.caption(PROJECT_CAPTION)
 
 #Загрузка всех листов Excel
 try:
@@ -60,16 +103,16 @@ required_columns = {
     "Перевод на технический язык",
     "Что ищем в источниках",
     LEFT_STATUS_COLUMN,
-    "Возможности кошки",
-    "Ограничения кошки",
-    "Ссылка на проверку кошки",
-    "Источники кошки",
+    LEFT_CAPABILITIES_COLUMN,
+    LEFT_LIMITATIONS_COLUMN,
+    LEFT_CHECK_LINK_COLUMN,
+    LEFT_SOURCES_COLUMN,
     RIGHT_STATUS_COLUMN,
-    "Возможности собаки",
-    "Ограничения собаки",
-    "Ссылка на проверку собаки",
-    "Источники собаки",
-    "Вывод для будущего владельца",
+    RIGHT_CAPABILITIES_COLUMN,
+    RIGHT_LIMITATIONS_COLUMN,
+    RIGHT_CHECK_LINK_COLUMN,
+    RIGHT_SOURCES_COLUMN,
+    CONCLUSION_COLUMN,
 }
 
 #Проверка наличия обязательных колонок
@@ -131,6 +174,11 @@ rules_methodology = rules_methodology.reset_index(drop=True)
 
 data_description = info.iloc[1,0]
 
+#=======================================================
+#=======================================================
+#=======================================================
+#=======================================================
+
 # Готовим компактную таблицу статусов для главной страницы
 status_overview = matrix[
     [CRITERION_COLUMN, LEFT_STATUS_COLUMN, RIGHT_STATUS_COLUMN]
@@ -151,6 +199,23 @@ status_overview = status_overview.rename(
     }
 )
 
+# Показываем общий вывод до перехода к отдельным критериям.
+st.subheader(KEY_QUESTION)
+
+left_card, right_card = st.columns(2)
+
+with left_card:
+    with st.container(border=True):
+        st.markdown(f"### {LEFT_NAME}")
+        st.info(LEFT_RESULT, icon="☺️") #.info = нейтральная информация, голубая плашка
+
+with right_card:
+    with st.container(border=True):
+        st.markdown(f"### {RIGHT_NAME}")
+        st.info(RIGHT_RESULT, icon="☺️")
+
+st.caption(RESULT_NOTE)
+
 # Выводим краткое сравнение на главной странице
 st.subheader("Сравнение по критериям")
 
@@ -160,7 +225,71 @@ status_legend = " · ".join(
 )
 
 st.caption(status_legend)
-st.dataframe(status_overview, hide_index=True)
+
+# Разрешаем пользователю выбрать один критерий для подробного просмотра
+table_event = st.dataframe(
+    status_overview,
+    hide_index=True,
+    on_select="rerun",
+    selection_mode="single-row",
+)
+
+# Получаем позицию выбранной строки и находим полный критерий в исходной матрице
+selected_rows = table_event.selection.rows
+
+if selected_rows:
+    selected_position = selected_rows[0]
+    selected_criterion = matrix.iloc[selected_position]
+
+    st.markdown(
+        f"Выбран критерий: **{selected_criterion[CRITERION_COLUMN]}**"
+    )
+    st.write(selected_criterion[QUESTION_COLUMN]) #пояснение к критерию
+
+    # Показываем статусы животных по выбранному критерию
+    left_status = selected_criterion[LEFT_STATUS_COLUMN]
+    right_status = selected_criterion[RIGHT_STATUS_COLUMN]
+
+    left_detail, right_detail = st.columns(2)
+
+    with left_detail.container(border=True):
+        st.markdown(f"#### {LEFT_NAME}")
+        st.write(f"{STATUS_ICONS[left_status]} {left_status}")
+        st.markdown("**Возможности**")
+        st.write(selected_criterion[LEFT_CAPABILITIES_COLUMN])
+        st.markdown("**Ограничения**")
+        st.write(selected_criterion[LEFT_LIMITATIONS_COLUMN])
+        st.markdown("**Ссылка на проверку**")
+        st.text(str(selected_criterion[LEFT_CHECK_LINK_COLUMN]))
+
+        st.markdown("**Источники**")
+        st.text(str(selected_criterion[LEFT_SOURCES_COLUMN]))
+
+    with right_detail.container(border=True):
+        st.markdown(f"#### {RIGHT_NAME}")
+        st.write(f"{STATUS_ICONS[right_status]} {right_status}")
+        st.markdown("**Возможности**")
+        st.write(selected_criterion[RIGHT_CAPABILITIES_COLUMN])
+        st.markdown("**Ограничения**")
+        st.write(selected_criterion[RIGHT_LIMITATIONS_COLUMN])
+        st.markdown("**Ссылка на проверку**")
+        st.text(str(selected_criterion[RIGHT_CHECK_LINK_COLUMN]))
+        st.markdown("**Источники**")
+        st.text(str(selected_criterion[RIGHT_SOURCES_COLUMN]))
+
+    # Показываем общий вывод по выбранному критерию
+    with st.container(border=True):
+        st.markdown("#### Вывод")
+        st.write(selected_criterion[CONCLUSION_COLUMN])
+
+# Даем пользователю возможность открыть методику
+st.subheader("Дополнительная информация")
+
+with st.expander("Как читать статусы"):
+    st.table(status_methodology, hide_index=True)
+
+with st.expander("Правила чтения результатов"):
+    st.table(rules_methodology, hide_index=True)
 
 #Техничесние выводы для проверки загрузки и обработки данных
 if SHOW_DEBUG:

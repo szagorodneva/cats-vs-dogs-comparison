@@ -36,7 +36,7 @@ STATUS_ICONS = {
     "Просто": "✅",
     "Есть затруднения": "⚠️",
     "Очень сложно": "🔴",
-    "Зависит от животного": "❔",
+    "Зависит от животного": "ℹ️",
 }
 
 CONCLUSION_COLUMN = "Вывод для будущего владельца"
@@ -47,7 +47,10 @@ SHOW_DEBUG = False
 
 # Заполнение верхнего блока страницы
 PROJECT_TITLE = "Котики vs песики"
-PAGE_ICON = "🐱❔🐶"
+PPAGE_ICON = "🐾" #иконка вкладки
+LEFT_ICON = "🐱"
+RIGHT_ICON = "🐶"
+
 
 PROJECT_DESCRIPTION = (
     "Сравниваем котиков и песиков по условиям содержания, уходу "
@@ -56,7 +59,7 @@ PROJECT_DESCRIPTION = (
 
 PROJECT_CAPTION = (
     "Как превратить табличного монстра в симпатичный аналитический интерфейс. " 
-    "Демонстрационный проект на Python, Pandas и Streamlit"
+    "Python, Pandas и Streamlit"
 )
 
 KEY_QUESTION = "Подходит ли животное для домашнего содержания?"
@@ -206,12 +209,12 @@ left_card, right_card = st.columns(2)
 
 with left_card:
     with st.container(border=True):
-        st.markdown(f"### {LEFT_NAME}")
+        st.markdown(f"### {LEFT_ICON} {LEFT_NAME}")
         st.info(LEFT_RESULT, icon="☺️") #.info = нейтральная информация, голубая плашка
 
 with right_card:
     with st.container(border=True):
-        st.markdown(f"### {RIGHT_NAME}")
+        st.markdown(f"### {RIGHT_ICON} {RIGHT_NAME}")
         st.info(RIGHT_RESULT, icon="☺️")
 
 st.caption(RESULT_NOTE)
@@ -225,6 +228,11 @@ status_legend = " · ".join(
 )
 
 st.caption(status_legend)
+# Объясняем, как открыть подробности выбранного критерия
+st.caption(
+    "Чтобы открыть подробности, поставьте галочку напротив нужного критерия"
+)
+
 
 # Разрешаем пользователю выбрать один критерий для подробного просмотра
 table_event = st.dataframe(
@@ -253,7 +261,7 @@ if selected_rows:
     left_detail, right_detail = st.columns(2)
 
     with left_detail.container(border=True):
-        st.markdown(f"#### {LEFT_NAME}")
+        st.markdown(f"#### {LEFT_ICON} {LEFT_NAME}")
         st.write(f"{STATUS_ICONS[left_status]} {left_status}")
         st.markdown("**Возможности**")
         st.write(selected_criterion[LEFT_CAPABILITIES_COLUMN])
@@ -266,7 +274,7 @@ if selected_rows:
         st.text(str(selected_criterion[LEFT_SOURCES_COLUMN]))
 
     with right_detail.container(border=True):
-        st.markdown(f"#### {RIGHT_NAME}")
+        st.markdown(f"#### {RIGHT_ICON} {RIGHT_NAME}")
         st.write(f"{STATUS_ICONS[right_status]} {right_status}")
         st.markdown("**Возможности**")
         st.write(selected_criterion[RIGHT_CAPABILITIES_COLUMN])
